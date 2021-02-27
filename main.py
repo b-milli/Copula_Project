@@ -42,7 +42,7 @@ for index, row in curr.iterrows():
 
     loan_pd[index] = last_pd[c_bucket][new_ind]
 
-res = vl.Copula_Loop(loan_weight, loan_corr, loan_pd, lambda x: stats.norm.rvs(size = x), lambda x: stats.norm.ppf(x), lambda x: stats.norm.cdf(x), 100)
+res = vl.Copula_Loop(loan_weight, loan_corr, loan_pd, lambda x: stats.norm.rvs(size = x), lambda x: stats.norm.ppf(x), lambda x: stats.norm.cdf(x), 1000000)
 
 plt.figure(figsize=(20,15))
 
@@ -61,7 +61,7 @@ plt.text((plt.xlim()[1] - plt.xlim()[0]) * 0.05 + plt.xlim()[0], plt.ylim()[1] -
 plt.savefig(r"Plots\Gaussian_Distribution.png", dpi = 600)
 plt.cla()
 
-res = vl.Copula_Loop(loan_weight, loan_corr, loan_pd, lambda x: stats.t.rvs(size = x, df = 2), lambda x: stats.t.ppf(x, df = 2), lambda x: stats.t.cdf(x, df = 2), 100)
+res = vl.Copula_Loop(loan_weight, loan_corr, loan_pd, lambda x: stats.t.rvs(size = x, df = 2), lambda x: stats.t.ppf(x, df = 2), lambda x: stats.t.cdf(x, df = 2), 1000000)
 
 plt.figure(figsize=(20,15))
 
