@@ -7,12 +7,14 @@ import pandas as pd
 import numpy as np
 from statsmodels.iolib.table import (SimpleTable, default_txt_fmt)
 
-data = pd.read_excel(r"./Probability of Default/buckets.xlsx")
+data = pd.read_csv(r"./Probability of Default/ALL LOANS Buckets.csv", dtype = {'curr_qtr':'str', 'CREDIT_BUCKET':'str', 'NEW_LOAN':'str', 'CURR_LOANS':'int64', 'BAD_LOANS':'int64', 'total_volume':'float'})
 
 data["QTR2"] = pd.PeriodIndex(data["QTR"], freq='Q').to_timestamp()
 data = data.sort_values(by=["QTR2"])
 
-data = data.loc[np.logical_and(np.logical_and(data["CREDIT_BUCKET"] != "No Score", data["QTR2"] > "2012-01-01"), data["QTR2"] < "2020-01-01"), :]
+data["PD"] = data["BAD_LOANS"] / data["CURR_LOANS"]
+
+data = data.loc[np.logical_and(data["CREDIT_BUCKET"] != 'No Score', data["QTR2"] > "2012-01-01"), :]
 
 data["y"] = stats.norm.ppf(np.where(data["PD"] == 0,0.000000001, np.where(data["PD"] == 1, 0.999999999, data["PD"])))
 
@@ -27,13 +29,13 @@ for c in c_bs:
     if c == c_bs[-1]:
         break
 
-    data["A_" + c + "_0"] = 0
-    data["A_" + c + "_1"] = 0
+    data["A_" + str(c) + "_0"] = 0
+    data["A_" + str(c) + "_1"] = 0
 
-    names = np.append(names, ["A_" + c + "_0", "A_" + c + "_1"])
+    names = np.append(names, ["A_" + str(c) + "_0", "A_" + str(c) + "_1"])
 
-    data.loc[np.logical_and(data["CREDIT_BUCKET"] == c, data["NEW_LOAN"] == 0), ["A_" + c + "_0"]] = 1
-    data.loc[np.logical_and(data["CREDIT_BUCKET"] == c, data["NEW_LOAN"] == 1), ["A_" + c + "_1"]] = 1
+    data.loc[np.logical_and(data["CREDIT_BUCKET"] == c, data["NEW_LOAN"] == '0'), ["A_" + str(c) + "_0"]] = 1
+    data.loc[np.logical_and(data["CREDIT_BUCKET"] == c, data["NEW_LOAN"] == '1'), ["A_" + str(c) + "_1"]] = 1
 
 
 for d in dts:
@@ -45,25 +47,20 @@ for d in dts:
 
     data.loc[data["QTR"] == d, ["B_" + d]] = 1
 
+#data.to_csv(r"./Probability of Default/test.csv")
 
-# ols_resid = sm.OLS(data["y"], data[names]).fit().resid
+Y = data["y"].to_numpy()
+X = data[names].to_numpy()
+Z = data[names[np.char.find(names, "b_") == -1]]
 
-# var = np.zeros(len(c_bs) * 2)
-# i=0
-# for c in c_bs:
-#     tmp_resid = ols_resid[np.logical_and(data["CREDIT_BUCKET"] == c, data["NEW_LOAN"] == 0)]
-#     var[i] = np.dot(tmp_resid, np.transpose(tmp_resid)) / (len(tmp_resid) - 2)
-#     i = i + 1
-#     tmp_resid = ols_resid[np.logical_and(data["CREDIT_BUCKET"] == c, data["NEW_LOAN"] == 1)]
-#     var[i] = np.dot(tmp_resid, np.transpose(tmp_resid)) / (len(tmp_resid) - 2)
-#     i = i + 1
+X = sm.add_constant(X)
+Z = sm.add_constant(Z)
 
-# X = data.loc[:,names].to_numpy()
-# H = np.dot(np.dot(X,np.linalg.inv(np.dot(np.transpose(X), X))),np.transpose(X))
-# cov = np.diag(var) - np.dot(np.dot(X,np.linalg.inv(np.dot(np.transpose(X), X))),np.transpose(X))
+resid = sm.OLS(Y, X).fit().resid
 
+VarEst = np.exp(sm.OLS(np.log(np.power(resid, 2)), Z).fit().predict())
 
-mdl = sm.GLS(data["y"], data[names])
+mdl = sm.GLS(Y / VarEst, X / np.transpose(np.array([VarEst])))
 
 res = mdl.fit()
 
@@ -72,23 +69,5 @@ results_as_html = res.summary().as_html()
 res_out = open(r"./Model Results/GLS_SUMMARY.html", 'w')
 res_out.write(results_as_html)
 res_out.close()
-
-# resid0 = res.resid
-# pred0 = res.predict()
-
-# def mle_fit(params, data,names):
-
-#     log_liklehood = 0
-
-#     for index, row in data.iterrows():
-#             log_liklehood += np.log(stats.norm.pdf(row['y'] - np.dot(params, row[names].to_numpy())))
-
-#     return log_liklehood
-
-# opt_res = minimize(lambda x: mle_fit(x, data, names), np.ones(len(names)), method='Nelder-Mead')
-
-# opt_res_df = pd.DataFrame({"param":names, "fit":opt_res.x})
-
-# opt_res_df.to_csv("./Model Results/MLE_norm_Optimization.csv")
 
 plt.plot_gls(data, res)
