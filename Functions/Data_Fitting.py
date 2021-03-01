@@ -59,7 +59,7 @@ resid = sm.OLS(Y, X).fit().resid
 
 VarEst = np.exp(sm.OLS(np.log(np.power(resid, 2)), Z).fit().predict())
 
-mdl = sm.GLS(Y / VarEst, X / np.transpose(np.array([VarEst])))
+mdl = sm.OLS(Y / VarEst, X / np.transpose(np.array([VarEst])))
 
 res = mdl.fit()
 

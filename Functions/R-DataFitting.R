@@ -52,7 +52,7 @@ mZ <- cbind("int"=1,data.matrix(alphs))
 vY <- data.matrix(data["y"])
 
 vBetaOLS = coef(lmHetMean <- lm.fit(y = vY, x = mX))
-
+ncol(data) - 8
 
 
 residHet = resid(lmHetMean)
@@ -76,6 +76,42 @@ for( c in 1:(length(c_bs) - 1)){
     geom_point(aes(x = DATE, y = Actual, color = "blue")) +
     ggtitle(paste("Credit Bucket Model Comparison - ", c_bs[c], sep = ""))
   
-  ggsave(paste("E:/Network/MFM_Classes/5031/Copulas/Project/Code/Model Results/Plots/R Comparison/", str_replace(str_replace(c_bs[c], "<", "lt_"), ">","gt_"),".png", sep = "" ), dpi = 600)
+  ggsave(paste("E:/Network/MFM_Classes/5031/Copulas/Project/Code/Model Results/Plots/R Comparison/normal/", str_replace(str_replace(c_bs[c], "<", "lt_"), ">","gt_"), "_normal.png", sep = "" ), dpi = 600)
+  
+}
+
+data["PD1"] <- data["PD"]
+data[data["PD"] == 0, "PD1"] <- 0.000000000001
+data["y"] <- lapply(data["PD1"], qt, df = 4)
+
+mX <- cbind("int"=1,data.matrix(indep))
+mZ <- cbind("int"=1,data.matrix(alphs))
+vY <- data.matrix(data["y"])
+
+vBetaOLS = coef(lmHetMean <- lm.fit(y = vY, x = mX))
+
+
+residHet = resid(lmHetMean)
+vVarEst = exp(fitted(lmHetVar <- lm.fit(y = log(residHet^2), x = mZ)))
+
+vBetaTS = coef(GLS <- lm.fit(y = vY/vVarEst, x = apply(mX, 2, function(x) x/vVarEst)))
+
+data$Estimated <- pt(fitted(GLS) * vVarEst, df = 4)
+
+for( c in 1:(length(c_bs) - 1)){
+  
+  tmp <- data %>% filter(CREDIT_BUCKET == c_bs[c]) %>%
+    select(DATE, NEW_LOAN, PD, Estimated) %>%
+    rename(Actual = PD)
+  
+  tmp$Loan_Age <- ifelse(tmp$NEW_LOAN == 1, "New Loan", "Old Loan")
+  
+  ggplot(tmp) +
+    facet_grid(rows = vars(Loan_Age)) +
+    geom_line(aes(x = DATE, y = Estimated, color = "red")) +
+    geom_point(aes(x = DATE, y = Actual, color = "blue")) +
+    ggtitle(paste("Credit Bucket Model Comparison - ", c_bs[c], sep = ""))
+  
+  ggsave(paste("E:/Network/MFM_Classes/5031/Copulas/Project/Code/Model Results/Plots/R Comparison/student/", str_replace(str_replace(c_bs[c], "<", "lt_"), ">","gt_"), "_student.png", sep = "" ), dpi = 600)
   
 }
