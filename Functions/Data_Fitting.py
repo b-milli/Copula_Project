@@ -54,7 +54,6 @@ X = data[names].to_numpy()
 Z = data[names[np.char.find(names, "b_") == -1]]
 
 X = sm.add_constant(X)
-Z = sm.add_constant(Z)
 
 resid = sm.OLS(Y, X).fit().resid
 
