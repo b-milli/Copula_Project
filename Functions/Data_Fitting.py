@@ -16,7 +16,7 @@ data["PD"] = data["BAD_LOANS"] / data["CURR_LOANS"]
 
 data = data.loc[np.logical_and(data["CREDIT_BUCKET"] != 'No Score', data["QTR2"] > "2012-01-01"), :]
 
-data["y"] = stats.norm.ppf(np.where(data["PD"] == 0,0.000000001, np.where(data["PD"] == 1, 0.999999999, data["PD"])))
+data["y"] = stats.norm.ppf(np.where(data["PD"] == 0,0.000000001, np.where(data["PD"] == 1, 1 - 0.000000001, data["PD"])))
 
 c_bs = data["CREDIT_BUCKET"].unique()
 dts = data["QTR"].unique()
