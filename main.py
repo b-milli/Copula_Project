@@ -6,7 +6,7 @@ import scipy.stats as stats
 import matplotlib.pyplot as plt
 import pandas as pd
 
-trials = 10000
+trials = 1000000
 
 all_data = df.get_data()
 
