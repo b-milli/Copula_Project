@@ -7,8 +7,6 @@ def Copula_Loop(Loan_weight, loan_corr, Unconditional_Default, y_gen_function, f
 
     #Assign memory for trial outcomes
     trial_default = np.zeros(trials)
-
-    un_con_pd = f_inv(Unconditional_Default)    
     
     #Generate a random variable Y for the systematic risk
     y = y_gen_function(trials)
@@ -17,7 +15,7 @@ def Copula_Loop(Loan_weight, loan_corr, Unconditional_Default, y_gen_function, f
     for trial in range(trials):
 
         #Expected Loss calcualtion
-        trial_default[trial] = np.sum(Loan_weight * g_cdf((un_con_pd - np.sqrt(loan_corr) * y[trial]) / np.sqrt(1 - loan_corr)))
+        trial_default[trial] = np.sum(Loan_weight * g_cdf((f_inv(Unconditional_Default)  - np.sqrt(loan_corr) * y[trial]) / np.sqrt(1 - loan_corr)))
 
     return trial_default
 

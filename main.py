@@ -6,6 +6,7 @@ import scipy.stats as stats
 import matplotlib.pyplot as plt
 import pandas as pd
 
+trials = 10000
 
 all_data = df.get_data()
 
@@ -18,11 +19,7 @@ curr = curr.reset_index()
 loans = int(np.floor(np.sum(curr["CURR_LOANS"]) * 0.01))
 
 def t_inv(x, df):
-    res = np.zeros(len(x))
-    for i in range(len(x)):
-        res[i] = np.sqrt(np.sum(np.power(stats.norm.rvs(size = df), 2)) / df) * stats.t.ppf(x[i], df = df)
-    
-    return res
+    return np.sqrt(np.sum(np.power(stats.norm.rvs(size = df), 2)) / df) * stats.t.ppf(x, df = df)
 
 
 loan_weight = np.zeros(loans) +  1 / loans
@@ -37,7 +34,7 @@ for index, row in curr.iterrows():
     loan_pd[low_index:high_index] = np.mean(curr.loc[np.logical_and(all_data["CREDIT_BUCKET"] == row["CREDIT_BUCKET"], all_data["NEW_LOAN"] == row["NEW_LOAN"]), "PD"])
     low_index += min(int(np.floor(row["CURR_LOANS"] * .01) - 1), loans)
 
-res = np.sort(vl.Copula_Loop(loan_weight, loan_corr, loan_pd, lambda x: stats.norm.rvs(size = x), lambda x: stats.norm.ppf(x), lambda x: stats.norm.cdf(x), 100000))
+res = np.sort(vl.Copula_Loop(loan_weight, loan_corr, loan_pd, lambda x: stats.norm.rvs(size = x), lambda x: stats.norm.ppf(x), lambda x: stats.norm.cdf(x), trials))
 
 plt.figure(figsize=(10,7.5))
 
@@ -56,7 +53,7 @@ plt.text((plt.xlim()[1] - plt.xlim()[0]) * 0.05 + plt.xlim()[0], plt.ylim()[1] -
 plt.savefig(r"Plots\Gaussian_Distribution_Base.png", dpi = 600)
 plt.cla()
 
-res = np.sort(vl.Copula_Loop(loan_weight, loan_corr, loan_pd, lambda x: stats.norm.rvs(size = x), lambda x: t_inv(x, df = 2), lambda x: stats.norm.cdf(x), 100000))
+res = np.sort(vl.Copula_Loop(loan_weight, loan_corr, loan_pd, lambda x: stats.norm.rvs(size = x), lambda x: t_inv(x, df = 2), lambda x: stats.norm.cdf(x), trials))
 
 plt.figure(figsize=(10,7.5))
 
@@ -87,7 +84,7 @@ for index, row in curr.iterrows():
     loan_pd[low_index:high_index] = fit_data.loc[np.logical_and(fit_data["CREDIT_BUCKET"] == row["CREDIT_BUCKET"], fit_data["NEW_LOAN"] == row["NEW_LOAN"]),"norm_PD"]
     low_index += min(int(np.floor(row["CURR_LOANS"] * .01) - 1), loans)
 
-res = np.sort(vl.Copula_Loop(loan_weight, loan_corr, loan_pd, lambda x: stats.norm.rvs(size = x), lambda x: stats.norm.ppf(x), lambda x: stats.norm.cdf(x), 100000))
+res = np.sort(vl.Copula_Loop(loan_weight, loan_corr, loan_pd, lambda x: stats.norm.rvs(size = x), lambda x: stats.norm.ppf(x), lambda x: stats.norm.cdf(x), trials))
 
 plt.figure(figsize=(10,7.5))
 
@@ -106,7 +103,7 @@ plt.text((plt.xlim()[1] - plt.xlim()[0]) * 0.05 + plt.xlim()[0], plt.ylim()[1] -
 plt.savefig(r"Plots\Gaussian_Distribution_Fit.png", dpi = 600)
 plt.cla()
 
-res = np.sort(vl.Copula_Loop(loan_weight, loan_corr, loan_pd, lambda x: stats.norm.rvs(size = x), lambda x: t_inv(x, df = 2), lambda x: stats.norm.cdf(x), 100000))
+res = np.sort(vl.Copula_Loop(loan_weight, loan_corr, loan_pd, lambda x: stats.norm.rvs(size = x), lambda x: t_inv(x, df = 2), lambda x: stats.norm.cdf(x), trials))
 
 plt.figure(figsize=(10,7.5))
 
