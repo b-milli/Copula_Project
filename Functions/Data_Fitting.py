@@ -7,37 +7,6 @@ import pandas as pd
 import numpy as np
 from statsmodels.iolib.table import (SimpleTable, default_txt_fmt)
 
-<<<<<<< HEAD
-data = pd.read_csv(r"./Probability of Default/ALL LOANS Buckets.csv", dtype = {'curr_qtr':'str', 'CREDIT_BUCKET':'str', 'NEW_LOAN':'str', 'CURR_LOANS':'int64', 'BAD_LOANS':'int64', 'total_volume':'float'})
-
-data["QTR2"] = pd.PeriodIndex(data["QTR"], freq='Q').to_timestamp()
-data = data.sort_values(by=["QTR2"])
-
-data["PD"] = data["BAD_LOANS"] / data["CURR_LOANS"]
-
-data = data.loc[np.logical_and(data["CREDIT_BUCKET"] != 'No Score', data["QTR2"] > "2012-01-01"), :]
-
-data["y"] = stats.norm.ppf(np.where(data["PD"] == 0,0.000000001, np.where(data["PD"] == 1, 1 - 0.000000001, data["PD"])))
-
-c_bs = data["CREDIT_BUCKET"].unique()
-dts = data["QTR"].unique()
-
-names = np.array([])
-
-i = 0
-
-for c in c_bs:
-    if c == c_bs[-1]:
-        break
-
-    data["A_" + str(c) + "_0"] = 0
-    data["A_" + str(c) + "_1"] = 0
-
-    names = np.append(names, ["A_" + str(c) + "_0", "A_" + str(c) + "_1"])
-
-    data.loc[np.logical_and(data["CREDIT_BUCKET"] == c, data["NEW_LOAN"] == '0'), ["A_" + str(c) + "_0"]] = 1
-    data.loc[np.logical_and(data["CREDIT_BUCKET"] == c, data["NEW_LOAN"] == '1'), ["A_" + str(c) + "_1"]] = 1
-=======
 def OLS_fit():
     data = pd.read_csv(r"./Probability of Default/ALL LOANS Buckets.csv", dtype = {'curr_qtr':'str', 'CREDIT_BUCKET':'str', 'NEW_LOAN':'str', 'CURR_LOANS':'int64', 'BAD_LOANS':'int64', 'total_volume':'float'})
     
@@ -102,7 +71,6 @@ def OLS_fit():
     for i in range(len(alphas)):
         gauss_PD[i] = stats.norm.cdf(alphas[i]*np.sqrt(1-rho))
         stu_t_PD[i] = stats.t.cdf(alphas[i]*np.sqrt(1-rho), df = 4)
->>>>>>> 0dd7477ca459be62ab31786385cb7c951e9526d6
 
     return rho, gauss_PD, stu_t_PD
 

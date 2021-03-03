@@ -20,6 +20,8 @@ data <- data %>% group_by(QTR, DATE, CREDIT_BUCKET, NEW_LOAN) %>%
 
 data$PD <- data$BAD_LOANS / data$CURR_LOANS
 
+write.csv(data, "E:/Network/MFM_Classes/5031/Copulas/Project/Code/Probability of Default/use_data.csv")
+
 c_bs <- unique(data$CREDIT_BUCKET)
 
 for( c in 1:length(c_bs)){

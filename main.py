@@ -11,18 +11,31 @@ all_data = df.get_data()
 
 curr = all_data.loc[all_data["QTR"] == "2020-Q1",:]
 
-tot_volume = np.sum(curr["total_volume"].to_numpy())
+tot_volume = np.sum(curr["total_volume"].to_numpy()) * 0.01
 
 curr = curr.reset_index()
 
-loan_weight = np.zeros(len(curr.index))
-loan_corr = np.zeros(len(curr.index)) + 0.15
-loan_pd = np.zeros(len(curr.index))
+loans = int(np.floor(np.sum(curr["CURR_LOANS"]) * 0.01))
 
+def t_inv(x, df):
+    res = np.zeros(len(x))
+    for i in range(len(x)):
+        res[i] = np.sqrt(np.sum(np.power(stats.norm.rvs(size = df), 2)) / df) * stats.t.ppf(x[i], df = df)
+    
+    return res
+
+
+loan_weight = np.zeros(loans) +  1 / loans
+loan_corr = np.zeros(loans) + 0.15
+loan_pd = np.zeros(loans)
+
+low_index = 0
+high_index = 0
 for index, row in curr.iterrows():
-    loan_weight[index] = row["total_volume"] / tot_volume
-
-    loan_pd[index] = np.mean(curr.loc[np.logical_and(all_data["CREDIT_BUCKET"] == row["CREDIT_BUCKET"], all_data["NEW_LOAN"] == row["NEW_LOAN"]), "PD"])
+    high_index += min(int(np.floor(row["CURR_LOANS"] * .01) - 1), loans)
+    
+    loan_pd[low_index:high_index] = np.mean(curr.loc[np.logical_and(all_data["CREDIT_BUCKET"] == row["CREDIT_BUCKET"], all_data["NEW_LOAN"] == row["NEW_LOAN"]), "PD"])
+    low_index += min(int(np.floor(row["CURR_LOANS"] * .01) - 1), loans)
 
 res = np.sort(vl.Copula_Loop(loan_weight, loan_corr, loan_pd, lambda x: stats.norm.rvs(size = x), lambda x: stats.norm.ppf(x), lambda x: stats.norm.cdf(x), 100000))
 
@@ -43,7 +56,7 @@ plt.text((plt.xlim()[1] - plt.xlim()[0]) * 0.05 + plt.xlim()[0], plt.ylim()[1] -
 plt.savefig(r"Plots\Gaussian_Distribution_Base.png", dpi = 600)
 plt.cla()
 
-res = np.sort(vl.Copula_Loop(loan_weight, loan_corr, loan_pd, lambda x: stats.t.rvs(size = x, df = 2), lambda x: stats.t.ppf(x, df = 2), lambda x: stats.t.cdf(x, df = 2), 100000))
+res = np.sort(vl.Copula_Loop(loan_weight, loan_corr, loan_pd, lambda x: stats.norm.rvs(size = x), lambda x: t_inv(x, df = 2), lambda x: stats.norm.cdf(x), 100000))
 
 plt.figure(figsize=(10,7.5))
 
@@ -51,8 +64,8 @@ plt.hist(res, bins = 1000, density = True)
 plt.title("Student Distribution of Losses - Base Case")
 textstr = r"Mean = {}".format(np.round(np.mean(res)*100,3)) + \
             "\n" + \
-             r'$99\%$ Var = {}'.format(np.round(res[int(np.floor(len(res) * (1 - 0.01)))] * 100,3)) + \
-             "\n Expected Shortfall = {}".format(np.round(np.mean(res[int(np.floor(len(res) * (1 - 0.01))):len(res)])*100, 3)) + \
+             r'$99\%$ Var = {}'.format(np.round(res[int(np.floor(len(res) * 0.99))] * 100,3)) + \
+             "\n Expected Shortfall = {}".format(np.round(np.mean(res[int(np.floor(len(res) * 0.99)):len(res)])*100, 3)) + \
              "\n Standard Error = {}".format(np.round(stats.sem(res, axis = None), 5))
 #Style
 props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
@@ -61,17 +74,18 @@ plt.text((plt.xlim()[1] - plt.xlim()[0]) * 0.05 + plt.xlim()[0], plt.ylim()[1] -
 #Save and Clear
 plt.savefig(r"Plots\Student_Distribution_Base.png", dpi = 600)
 
-
 fit_data = pd.read_csv("Probability of Default/fit_model.csv")
 
-loan_weight = np.zeros(len(curr.index))
-loan_corr = np.zeros(len(curr.index)) + np.max(fit_data["norm_rho"].to_numpy())
-loan_pd = np.zeros(len(curr.index))
+loan_corr = np.zeros(loans) + np.max(fit_data["norm_rho"].to_numpy())
+loan_pd = np.zeros(loans)
 
+low_index = 0
+high_index = 0
 for index, row in curr.iterrows():
-    loan_weight[index] = row["total_volume"] / tot_volume
+    high_index += min(int(np.floor(row["CURR_LOANS"] * .01) - 1), loans)
 
-    loan_pd[index] = fit_data.loc[np.logical_and(fit_data["CREDIT_BUCKET"] == row["CREDIT_BUCKET"], fit_data["NEW_LOAN"] == row["NEW_LOAN"]),"norm_PD"]
+    loan_pd[low_index:high_index] = fit_data.loc[np.logical_and(fit_data["CREDIT_BUCKET"] == row["CREDIT_BUCKET"], fit_data["NEW_LOAN"] == row["NEW_LOAN"]),"norm_PD"]
+    low_index += min(int(np.floor(row["CURR_LOANS"] * .01) - 1), loans)
 
 res = np.sort(vl.Copula_Loop(loan_weight, loan_corr, loan_pd, lambda x: stats.norm.rvs(size = x), lambda x: stats.norm.ppf(x), lambda x: stats.norm.cdf(x), 100000))
 
@@ -81,8 +95,8 @@ plt.hist(res, bins = 1000, density = True)
 plt.title("Gaussian Distribution of Losses - Fit Parameters")
 textstr = r"Mean = {}".format(np.round(np.mean(res)*100,3)) + \
             "\n" + \
-             r'$99\%$ Var = {}'.format(np.round(res[int(np.floor(len(res) * (1 - 0.01)))] * 100,3)) + \
-             "\n Expected Shortfall = {}".format(np.round(np.mean(res[int(np.floor(len(res) * (1 - 0.01))):len(res)])*100, 3)) + \
+             r'$99\%$ Var = {}'.format(np.round(res[int(np.floor(len(res) * 0.99))] * 100,3)) + \
+             "\n Expected Shortfall = {}".format(np.round(np.mean(res[int(np.floor(len(res) * 0.99)):len(res)])*100, 3)) + \
              "\n Standard Error = {}".format(np.round(stats.sem(res, axis = None), 5))
 #Style
 props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
@@ -92,16 +106,7 @@ plt.text((plt.xlim()[1] - plt.xlim()[0]) * 0.05 + plt.xlim()[0], plt.ylim()[1] -
 plt.savefig(r"Plots\Gaussian_Distribution_Fit.png", dpi = 600)
 plt.cla()
 
-loan_weight = np.zeros(len(curr.index))
-loan_corr = np.zeros(len(curr.index)) + np.max(fit_data["student_rho"].to_numpy())
-loan_pd = np.zeros(len(curr.index))
-
-for index, row in curr.iterrows():
-    loan_weight[index] = row["total_volume"] / tot_volume
-
-    loan_pd[index] = fit_data.loc[np.logical_and(fit_data["CREDIT_BUCKET"] == row["CREDIT_BUCKET"], fit_data["NEW_LOAN"] == row["NEW_LOAN"]),"student_PD"]
-
-res = np.sort(vl.Copula_Loop(loan_weight, loan_corr, loan_pd, lambda x: stats.t.rvs(size = x, df = 2), lambda x: stats.t.ppf(x, df = 2), lambda x: stats.t.cdf(x, df = 2), 100000))
+res = np.sort(vl.Copula_Loop(loan_weight, loan_corr, loan_pd, lambda x: stats.norm.rvs(size = x), lambda x: t_inv(x, df = 2), lambda x: stats.norm.cdf(x), 100000))
 
 plt.figure(figsize=(10,7.5))
 
@@ -109,8 +114,8 @@ plt.hist(res, bins = 1000, density = True)
 plt.title("Student Distribution of Losses - Fit Parameters")
 textstr = r"Mean = {}".format(np.round(np.mean(res)*100,3)) + \
             "\n" + \
-             r'$99\%$ Var = {}'.format(np.round(res[int(np.floor(len(res) * (1 - 0.01)))] * 100,3)) + \
-             "\n Expected Shortfall = {}".format(np.round(np.mean(res[int(np.floor(len(res) * (1 - 0.01))):len(res)])*100, 3)) + \
+             r'$99\%$ Var = {}'.format(np.round(res[int(np.floor(len(res) * 0.99))] * 100,3)) + \
+             "\n Expected Shortfall = {}".format(np.round(np.mean(res[int(np.floor(len(res) * 0.99)):len(res)])*100, 3)) + \
              "\n Standard Error = {}".format(np.round(stats.sem(res, axis = None), 5))
 #Style
 props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
