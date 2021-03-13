@@ -87,6 +87,7 @@ for(row in 1:nrow(out_data)){
 
 risk_factor <- -vBetaTS[grepl("B_",names(vBetaTS))] / sqrt(mean(vBetaTS[grepl("B_",names(vBetaTS))] ^ 2))
 
+acf(risk_factor)
 
 names(risk_factor) <- substr(names(risk_factor), 3, nchar(names(risk_factor)))
 
