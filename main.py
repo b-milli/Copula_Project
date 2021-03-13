@@ -6,7 +6,7 @@ import scipy.stats as stats
 import matplotlib.pyplot as plt
 import pandas as pd
 
-trials = 1000000
+trials = 10000
 
 all_data = df.get_data()
 
@@ -50,10 +50,10 @@ props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
 #Append the Var and ES
 plt.text((plt.xlim()[1] - plt.xlim()[0]) * 0.05 + plt.xlim()[0], plt.ylim()[1] - (plt.ylim()[1] - plt.ylim()[0])*0.05, textstr, fontsize=14,verticalalignment='top', bbox=props)
 #Save and Clear
-plt.savefig(r"Plots\Gaussian_Distribution_Base.png", dpi = 600)
+plt.savefig(r"Model Results\Plots\Gaussian_Distribution_Base.png", dpi = 600)
 plt.cla()
 
-res = np.sort(vl.Copula_Loop(loan_weight, loan_corr, loan_pd, lambda x: stats.norm.rvs(size = x), lambda x: t_inv(x, df = 2), lambda x: stats.norm.cdf(x), trials))
+res = np.sort(vl.Copula_Loop(loan_weight, loan_corr, loan_pd, lambda x: stats.norm.rvs(size = x), lambda x: t_inv(x, df = 4), lambda x: stats.norm.cdf(x), trials))
 
 plt.figure(figsize=(10,7.5))
 
@@ -69,7 +69,7 @@ props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
 #Append the Var and ES
 plt.text((plt.xlim()[1] - plt.xlim()[0]) * 0.05 + plt.xlim()[0], plt.ylim()[1] - (plt.ylim()[1] - plt.ylim()[0])*0.05, textstr, fontsize=14,verticalalignment='top', bbox=props)
 #Save and Clear
-plt.savefig(r"Plots\Student_Distribution_Base.png", dpi = 600)
+plt.savefig(r"Model Results\Plots\Student_Distribution_Base.png", dpi = 600)
 
 fit_data = pd.read_csv("Probability of Default/fit_model.csv")
 
@@ -100,10 +100,10 @@ props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
 #Append the Var and ES
 plt.text((plt.xlim()[1] - plt.xlim()[0]) * 0.05 + plt.xlim()[0], plt.ylim()[1] - (plt.ylim()[1] - plt.ylim()[0])*0.05, textstr, fontsize=14,verticalalignment='top', bbox=props)
 #Save and Clear
-plt.savefig(r"Plots\Gaussian_Distribution_Fit.png", dpi = 600)
+plt.savefig(r"Model Results\Plots\Gaussian_Distribution_Fit.png", dpi = 600)
 plt.cla()
 
-res = np.sort(vl.Copula_Loop(loan_weight, loan_corr, loan_pd, lambda x: stats.norm.rvs(size = x), lambda x: t_inv(x, df = 2), lambda x: stats.norm.cdf(x), trials))
+res = np.sort(vl.Copula_Loop(loan_weight, loan_corr, loan_pd, lambda x: stats.norm.rvs(size = x), lambda x: t_inv(x, df = 4), lambda x: stats.norm.cdf(x), trials))
 
 plt.figure(figsize=(10,7.5))
 
@@ -119,4 +119,4 @@ props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
 #Append the Var and ES
 plt.text((plt.xlim()[1] - plt.xlim()[0]) * 0.05 + plt.xlim()[0], plt.ylim()[1] - (plt.ylim()[1] - plt.ylim()[0])*0.05, textstr, fontsize=14,verticalalignment='top', bbox=props)
 #Save and Clear
-plt.savefig(r"Plots\Student_Distribution_Fit.png", dpi = 600)
+plt.savefig(r"Model Results\Plots\Student_Distribution_Fit.png", dpi = 600)
