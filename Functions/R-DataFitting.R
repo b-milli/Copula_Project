@@ -85,6 +85,8 @@ for(row in 1:nrow(out_data)){
     out_data[row,"norm_PD"] <- pnorm(vBetaTS[paste("A_",out_data[row,"CREDIT_BUCKET"],"_", out_data[row,"NEW_LOAN"], sep = "")] * sqrt(1 - out_data[row,"norm_rho"]))
 }
 
+write.csv(out_data, "E:/Network/MFM_Classes/5031/Copulas/Project/Code/Probability of Default/fit_model.csv")
+
 risk_factor <- -vBetaTS[grepl("B_",names(vBetaTS))] / sqrt(mean(vBetaTS[grepl("B_",names(vBetaTS))] ^ 2))
 
 acf(risk_factor)
@@ -101,6 +103,14 @@ ggplot(risk_plot, aes(x = date, y = risk_factor)) +
   geom_line()
 
 ggsave("E:/Network/MFM_Classes/5031/Copulas/Project/Code/Model Results/risk_factor_timeseries.png", dpi = 600)
+
+data$Fit <- mX %*% vBetaTS
+
+data$Resid <- data$y - data$Fit
+
+ggplot(data[data$CREDIT_BUCKET != ">820",], aes(x = y, y = Resid)) +
+  facet_grid(rows = vars(CREDIT_BUCKET)) +
+  geom_point()
 
 data$Estimated <- pnorm((mX %*% vBetaTS))
 
