@@ -8,7 +8,8 @@ import numpy as np
 from statsmodels.iolib.table import (SimpleTable, default_txt_fmt)
 
 def OLS_fit():
-    data = pd.read_csv(r"./Probability of Default/ALL LOANS Buckets.csv", dtype = {'curr_qtr':'str', 'CREDIT_BUCKET':'str', 'NEW_LOAN':'str', 'CURR_LOANS':'int64', 'BAD_LOANS':'int64', 'total_volume':'float'})
+    data = pd.read_csv(r"./Probability of Default/ALL LOANS Buckets.csv", dtype = {'curr_qtr':'str', 'CREDIT_BUCKET':'str', 'NEW_LOAN':'str', 
+                                                                                   'CURR_LOANS':'int64', 'BAD_LOANS':'int64', 'total_volume':'float'})
     
     data["QTR2"] = pd.PeriodIndex(data["QTR"].values, freq='Q').to_timestamp()
     data = data.sort_values(by=["QTR2"])
